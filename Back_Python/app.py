@@ -1,86 +1,75 @@
-#----------------------------------------------------------#
-# Proyecto: Pensando Problemas IA
-# Nombre: Implementación Pipeline - Testeo App HTTP Socket
-# Por: Mateo Alejandro Rodríguez Ramírez
-#----------------------------------------------------------#
-
-
-# Para los https
-
-from flask import Flask, request, jsonify
-
-app = Flask(__name__)
-
-@app.route('/run', methods=['POST'])
-def run_app():
-    input_data = request.json.get('input', '')
-    return jsonify({'output': f'Recibido: {input_data}'})
-
-if __name__ == '__main__':
-    from waitress import serve
-    serve(app, host='0.0.0.0', port=5000)
-
-# Cargue de Paquetes:
-
-ruta = r'.'
-import os
-import random
-import psutil
-os.chdir(ruta)
-os.listdir()
-
+from flask import Flask, request, jsonify, send_from_directory
+from flask_cors import CORS
 from Prompt_Completion_V00 import Preguntas
 from PIL import Image
+import random
+import psutil
+import os
+import json
+import io
 
-# Iniciales:
+app = Flask(__name__, static_folder='react_build')
+cors = CORS(app)
+
+History = [[
+        {
+            "id": 0,
+            "responseChatbot": "Quiz n°1"
+        },
+        {
+            "id": 1,
+            "responseChatbot": "Usted iniciará la práctica libre de ejercicios que el equipo pedagógico de Pensando Problemas preparó.\nPor favor sientase con toda la confianza de responder las preguntas según sus conocimientos y sin presiones de ningún tipo.\nLos resultados que obtenga serán utilizados para refinar nuestro algoritmo de recomendación de ejercicios.\n\nAtentamente: Equipo de Pensando Problemas."
+        }
+    ]]
+history_path = "react_build/"
+
+# Variables for the sake of the program
+record = []
+n = 0
+inicializador_id = 1
+info = {}
+success_fail = True
+
 k = 140
 emph = '#'+'-'*k+'#'
 
-def init_message():
-    print(emph)
-    codigo = input('\nEscriba su Código de Estudiante: ')
-    print(emph)
-    return codigo
+# Retrieve the history and save it in local when launching the app
+def load_history():
+    global History
+    file_path = history_path+"History.json"
+    if os.path.exists(file_path):
+        with open(file_path, "r", encoding='utf-8') as f:
+            if len(History[0])<3:
+                History[0].append({'id':2, 'responseChatbot': call_image(inicializador_id)})
+            with io.open(os.path.join(history_path, 'History.json'), 'w', encoding='utf-8') as history_file:
+                history_file.write(json.dumps(History))
+    else:
+        with io.open(os.path.join(history_path, 'History.json'), 'w') as history_file:
+            history_file.write(json.dumps([[]]))
 
-def head():
-    head_message = emph+'\nUsted iniciará la práctica libre de ejercicios que el equipo pedagógico de Pensando Problemas preparó.\nPor favor sientase con toda la confianza de responder las preguntas según sus conocimientos y sin presiones de ningún tipo.\nLos resultados que obtenga serán utilizados para refinar nuestro algoritmo de recomendación de ejercicios.\n\nAtentamente: Equipo de Pensando Problemas.\n'+emph
-    print(head_message)
-
-def tail(n):
-    tail_message = '\n\n'+emph+'\nHa finalizado la práctica.\nUsted realizó {} ejercicios.\n'.format(n)+emph
-    print(tail_message)
 
 def ask_message():
     ask_msg = input('\n\nEscriba su respuesta: ')
     return ask_msg
 
 def fail_message():
-    fail_msg = '\n\nSe ha equivocado en la elección de la respuesta correcta. A continuación se le mostrará un ejercicio de nivel menor o igual al que realizó.\n\n'
-    print(fail_msg)
+    fail_msg = '\n\nSe ha equivocado en la elección de la respuesta correcta. A continuación se le mostrará un ejercicio de nivel menor o igual al que realizó. ¿ Desea Continuar ?\n\n'
+    return(fail_msg)
 
 def success_message():
-    success_msg = '\n\nHa acertado en la elección de la respuesta correcta. A continuación se le mostrará un ejercicio de nivel superior o igual al que realizó.\n\n'
-    print(success_msg)
-
-def continuacion():
-    continuar = input('\n¿Desea Continuar (yes:1,no:0)?: ')
-    enter = (continuar=='1')
-    return enter
+    success_msg = '\n\nHa acertado en la elección de la respuesta correcta. A continuación se le mostrará un ejercicio de nivel superior o igual al que realizó. ¿ Desea Continuar ?\n\n'
+    return(success_msg)
 
 def call_image(id): 
-    img = Image.open('../../../Preguntas/Preg_0{}.png'.format(id))
-    img.show()
+    img = 'react_build/Images/Preg_0{}.png'.format(id)
+    print("Image", img)
+    return img
 
 def call_question(id):
     return Preguntas[id]
 
-def close_image():
-    for proc in psutil.process_iter():
-        print(proc)
-        if proc.name() == "display":
-            proc.kill()
-
-def update_question(success_fail,info,inicializador_id):
+def update_question(success_fail,inicializador_id):
+    global info
     indices = []
     dificultad_actual = Preguntas[inicializador_id]['dif']
     for pregunta in Preguntas:
@@ -97,43 +86,76 @@ def update_question(success_fail,info,inicializador_id):
     except:
         print('\nNo hay más ejercicios para que usted resuelva.\n')
 
-#-------------------------------
-# Corrida del programa
 
-def program():
-    record = []
-    enter = True
-    n = 0
-    inicializador_id = 1
-    while enter:
-        if n==0: 
-            head() # Mensaje de Bienvenida al programa.
-        n+=1
-        call_image(inicializador_id) # Muestra la pregunta.
-        info = call_question(inicializador_id) # Obtiene la información de la pregunta.
-        response = ask_message() # Pide la respuesta al estudiante.
-        success_fail = response in info['res'] # Revisa si la respuesta es correcta o no.
-        record.append((inicializador_id,success_fail)) #  
-        if success_fail:
-            success_message() # Mensaje de acierto en la respuesta
+@app.route('/api/query', methods=['POST'])
+def receive_question():
+    global inicializador_id
+    global record
+    global info
+    global success_fail
+    try:
+        data = request.get_json()
+        responseStudent = data.get('responseStudent')
+        # Verify that the question isn't empty
+        if len(responseStudent)==0 or responseStudent.isspace():
+            return jsonify({'error': 'La pregunta esta vacia'}), 204
+        
+        # Retrieve the history stored in the front
+        history = data.get('history')
+        if history is None:
+            history=[]
+        if len(responseStudent)==0:
+            responseStudent.append(" ")
+        if len(history)==0:
+            q_id = 0
         else:
-            fail_message() # Mensaje de fallo en la respuesta:
-        #close_image() #Se cierra la imagen en cuestión.
-        enter =continuacion() # Pregunta si se desea continuar, independiente de si acierta o no.
-        inicializador_id = update_question(success_fail,info,inicializador_id) # Se actualiza a una nueva pregunta para que el estudiante resuelva.
-        if enter==False: 
-            tail(n) # Mensaje de Salida del programa.    
-    return(record)
+            q_id = history[-1]['id']
+        question = history[-1]['responseChatbot']
+        if "¿ Desea Continuar ?" in question:
+            if ("si" in responseStudent) or ("yes" in responseStudent):
+                inicializador_id = update_question(success_fail,inicializador_id) # Se actualiza a una nueva pregunta para que el estudiante resuelva.
+                responseChatbot = call_image(inicializador_id)
+            elif ("no" in responseStudent):
+                responseChatbot = "bye"
+            else:
+                responseChatbot = "No entendí tu respuesta. ¿ Desea Continuar ?"
+            response = {
+                    'id': q_id,
+                    'responseStudent': f"{responseStudent}",
+                    'responseChatbot': f"{responseChatbot}"
+                }
+                
 
-def run_program():
-    nombre = init_message()
-    puntaje = program()
-    return({nombre:puntaje})
+        else:
+            info = call_question(inicializador_id)
+            success_fail = responseStudent in info['res'] # Revisa si la respuesta es correcta o no.
+            
+            record.append((inicializador_id,success_fail))
+            if success_fail:
+                responseChatbot = success_message() # Mensaje de acierto en la respuesta
+            else:
+                responseChatbot = fail_message() # Mensaje de fallo en la respuesta:
 
-if False:
-    for k in psutil.process_iter():
-        k.name()
-        if k.name()=='display':
-            print('Hola')
 
-run_program()
+            response = {
+                'id': q_id,
+                'responseStudent': f"{responseStudent}",
+                'responseChatbot': f"{responseChatbot}"
+            }
+        
+        return jsonify({'message': response})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+# Serve React App
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def serve(path):
+    if path != "" and os.path.exists(app.static_folder + '/' + path):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
+
+if __name__ == '__main__':
+    load_history()
+    app.run(port=3001, debug=True) 

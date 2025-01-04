@@ -7,9 +7,12 @@
 
 # testing
 /coverage
+/Front_React/app.py
+/Front_React/Prompt_Completion_V00.py
 
 # production
 /build
+/Front_React/build
 
 # misc
 .DS_Store
