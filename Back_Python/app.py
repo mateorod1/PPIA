@@ -1,9 +1,7 @@
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
 from Prompt_Completion_V00 import Preguntas
-from PIL import Image
 import random
-import psutil
 import os
 import json
 import io
