@@ -45,6 +45,25 @@ function App() {
     }
   }
 
+  const fetchChatHistory = async () => {
+    try {
+      const response = await fetch('History.json');
+      const data = await response.json();
+      if (data[0].length === 0) {
+        setChatHistory([]);
+        setCurrentChatHistory({ conversationIndex: 0, conversation: [] });
+      } else {
+        setChatHistory(data);
+        setCurrentChatHistory({ 
+          conversationIndex: data.length - 1, 
+          conversation: data[data.length - 1] 
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching chat history:', error);
+    }
+  };
+
 
   const inputHandler = (e) => {
     const userInput = e.target.value;
@@ -70,30 +89,33 @@ function App() {
     .then(response => response.json())
     .then(data => {
       setLoading(false);
-      
-      setCurrentChatHistory(prevHistory => ({conversation:
-        [
-        ...(prevHistory.conversation || []),
-        { id: data.message.id, responseStudent: responseStudent, responseChatbot: data.message.responseChatbot}
-        ],
-        conversationIndex: prevHistory.conversationIndex })
-      );
-      
-
-      // Update  the global chat history to avoid incoherences
-      if (currentChatHistory.conversation===undefined || currentChatHistory.conversation.length===0){
-        setChatHistory([...chatHistory, [{ id: data.message.id, responseStudent: responseStudent, responseChatbot: data.message.responseChatbot}]]);
+      if (data.message.responseChatbot === "reinit") {
+        fetchChatHistory();
       } else {
-        const updatedHistory = chatHistory.map((conversation, index) => {
-          if (index === currentChatHistory.conversationIndex) {
-            return [...currentChatHistory.conversation, { id: data.message.id, responseStudent: responseStudent, responseChatbot: data.message.responseChatbot}];
-          }
-          return conversation;
-        });
-        setChatHistory(updatedHistory);
+        setCurrentChatHistory(prevHistory => ({conversation:
+          [
+          ...(prevHistory.conversation || []),
+          { id: data.message.id, responseStudent: responseStudent, responseChatbot: data.message.responseChatbot}
+          ],
+          conversationIndex: prevHistory.conversationIndex })
+        );
+        
+
+        // Update  the global chat history to avoid incoherences
+        if (currentChatHistory.conversation===undefined || currentChatHistory.conversation.length===0){
+          setChatHistory([...chatHistory, [{ id: data.message.id, responseStudent: responseStudent, responseChatbot: data.message.responseChatbot}]]);
+        } else {
+          const updatedHistory = chatHistory.map((conversation, index) => {
+            if (index === currentChatHistory.conversationIndex) {
+              return [...currentChatHistory.conversation, { id: data.message.id, responseStudent: responseStudent, responseChatbot: data.message.responseChatbot}];
+            }
+            return conversation;
+          });
+          setChatHistory(updatedHistory);
+        }
+        // Clear the TextField
+        setResponseStudent('');
       }
-      // Clear the TextField
-      setResponseStudent('');
     })
     .catch(error => {
       console.error('Error while sending the request to the backend: ', error);
@@ -114,22 +136,6 @@ function App() {
   }, [chatHistory]);
   
   useEffect(() => {
-    const fetchChatHistory = async () => {
-      try {
-        const response = await fetch('History.json');
-        const data = await response.json();
-        if (data[0].length === 0) {
-          setChatHistory([]);
-          setCurrentChatHistory({conversationIndex: 0, conversation: []});
-        } else {
-          setChatHistory(data);
-          setCurrentChatHistory({ conversationIndex: data.length - 1, conversation: data[data.length - 1] });
-        }
-      } catch (error) {
-        console.error('Error fetching chat history:', error);
-      }
-    };
-
     fetchChatHistory();
   }, []);   
 

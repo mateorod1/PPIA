@@ -12,10 +12,6 @@ cors = CORS(app)
 History = [[
         {
             "id": 0,
-            "responseChatbot": "Quiz n°1"
-        },
-        {
-            "id": 1,
             "responseChatbot": "Usted iniciará la práctica libre de ejercicios que el equipo pedagógico de Pensando Problemas preparó.\nPor favor sientase con toda la confianza de responder las preguntas según sus conocimientos y sin presiones de ningún tipo.\nLos resultados que obtenga serán utilizados para refinar nuestro algoritmo de recomendación de ejercicios.\n\nAtentamente: Equipo de Pensando Problemas."
         }
     ]]
@@ -60,7 +56,7 @@ tema dificultad (ej: logica 2)'''
     
     inicializador_id = 1 # Cambiar o añadir una función acá para instanciar el inicializador con lo que uno quiera
     if os.path.exists(file_path):
-        History[0].append({'id':2, 'responseChatbot': list_temas_difs})
+        History[0].append({'id':1, 'responseChatbot': list_temas_difs})
         with io.open(os.path.join(history_path, 'History.json'), 'w', encoding='utf-8') as history_file:
             history_file.write(json.dumps(History))
     else:
@@ -79,6 +75,10 @@ def fail_message():
 def success_message():
     success_msg = 'Ha acertado en la elección de la respuesta correcta. A continuación se le mostrará un ejercicio de nivel superior o igual al que realizó. ¿ Desea Continuar ?'
     return(success_msg)
+
+def tail_message(nb_preg):
+    tail_message = 'Ha finalizado la práctica.\nUsted realizó {} ejercicios. ¿ Desea reiniciar un quiz ?'.format(nb_preg)
+    return(tail_message)
 
 def call_image(id): 
     img = 'react_build/Images/Preg_0{}.png'.format(id)
@@ -131,12 +131,13 @@ def receive_question():
         else:
             q_id = history[-1]['id']
         question = history[-1]['responseChatbot']
+
         if "¿ Desea Continuar ?" in question:
             if ("si" in responseStudent) or ("yes" in responseStudent):
                 inicializador_id = update_question(success_fail,inicializador_id) # Se actualiza a una nueva pregunta para que el estudiante resuelva.
                 responseChatbot = call_image(inicializador_id)
             elif ("no" in responseStudent):
-                responseChatbot = "bye"
+                responseChatbot = tail_message(1)
             else:
                 responseChatbot = "No entendí tu respuesta. ¿ Desea Continuar ?"
             response = {
@@ -187,7 +188,21 @@ tema dificultad (ej: logica 2)'''
                 'responseStudent': f"{responseStudent}",
                 'responseChatbot': f"{responseChatbot}"
             }
+    
+        elif "¿ Desea reiniciar un quiz ?" in question:
+            if 'si' in responseStudent or 'yes' in responseStudent:
+                responseChatbot = 'reinit'
+            elif ("no" in responseStudent):
+                responseChatbot = tail_message(1)
+            else:
+                responseChatbot = "No entendí tu respuesta. ¿ Desea reiniciar un quiz ?"
+            response = {
+                'id': q_id,
+                'responseStudent': f"{responseStudent}",
+                'responseChatbot': f"{responseChatbot}"
+            }
 
+            
         else:
             info = call_question(inicializador_id)
             success_fail = responseStudent in info['res'] # Revisa si la respuesta es correcta o no.
