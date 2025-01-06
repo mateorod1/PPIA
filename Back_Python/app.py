@@ -76,8 +76,46 @@ def success_message():
     success_msg = 'Ha acertado en la elección de la respuesta correcta. A continuación se le mostrará un ejercicio de nivel superior o igual al que realizó. ¿ Desea Continuar ?'
     return(success_msg)
 
-def tail_message(nb_preg):
-    tail_message = 'Ha finalizado la práctica.\nUsted realizó {} ejercicios. ¿ Desea reiniciar un quiz ?'.format(nb_preg)
+def tail_message():
+    global record
+    themes = []
+    difs_succeed = {}
+    difs_failed = {}
+    for rec in record:
+        print(rec)
+        print(Preguntas[rec[0]])
+        if Preguntas[rec[0]]['tema'] not in themes:
+            themes.append(Preguntas[rec[0]]['tema'])
+        if rec[1]:
+            if Preguntas[rec[0]]['dif'] in difs_succeed:
+                difs_succeed[Preguntas[rec[0]]['dif']]+=1
+            else:
+                difs_succeed[Preguntas[rec[0]]['dif']] = 1
+        else:
+            if Preguntas[rec[0]]['dif'] in difs_failed:
+                difs_failed[Preguntas[rec[0]]['dif']]+=1
+            else:
+                difs_failed[Preguntas[rec[0]]['dif']] = 1
+
+    temas_str = ", ".join(map(str, themes))
+    
+    sorted_dict_succeed = dict(sorted(difs_succeed.items()))
+    summary_succeed = "\n ".join(
+        f"\t- {count} preguntas{'s' if count > 1 else ''} del nivel {level} logradas"
+        for level, count in sorted_dict_succeed.items()
+    )
+    sorted_dict_failed = dict(sorted(difs_failed.items()))
+    summary_failed = "\n ".join(
+        f"\t- {count} preguntas{'s' if count > 1 else ''} del nivel {level} perdidas"
+        for level, count in sorted_dict_failed.items()
+    )
+    summary = summary_succeed + "\n\n" + summary_failed
+
+    rec_str = f"El resumen de la practica es el siguiente: \n{summary}."
+    print(difs_succeed, difs_failed)
+    print(rec_str)
+    
+    tail_message = 'Ha finalizado la práctica.\nUsted realizó {} ejercicios.\n\n'.format(len(record)) + "El tema elegido fue "+temas_str+".\n"+ rec_str + '\n¿ Desea reiniciar un quiz ?'
     return(tail_message)
 
 def call_image(id): 
@@ -137,7 +175,9 @@ def receive_question():
                 inicializador_id = update_question(success_fail,inicializador_id) # Se actualiza a una nueva pregunta para que el estudiante resuelva.
                 responseChatbot = call_image(inicializador_id)
             elif ("no" in responseStudent):
-                responseChatbot = tail_message(1)
+
+                responseChatbot = tail_message()
+                print(record)
             else:
                 responseChatbot = "No entendí tu respuesta. ¿ Desea Continuar ?"
             response = {
