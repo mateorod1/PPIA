@@ -34,13 +34,15 @@ emph = '#'+'-'*k+'#'
 # Retrieve the history and save it in local when launching the app
 def load_history():
     global History
+    global inicializador_id
     file_path = history_path+"History.json"
+
+    inicializador_id = 1 # Cambiar o añadir una función acá para instanciar el inicializador con lo que uno quiera
     if os.path.exists(file_path):
-        with open(file_path, "r", encoding='utf-8') as f:
-            if len(History[0])<3:
-                History[0].append({'id':2, 'responseChatbot': call_image(inicializador_id)})
-            with io.open(os.path.join(history_path, 'History.json'), 'w', encoding='utf-8') as history_file:
-                history_file.write(json.dumps(History))
+        if len(History[0])<3:
+            History[0].append({'id':2, 'responseChatbot': call_image(inicializador_id)}) # Cambiar el inicializador permite cambiar la primera imagen que se muestra
+        with io.open(os.path.join(history_path, 'History.json'), 'w', encoding='utf-8') as history_file:
+            history_file.write(json.dumps(History))
     else:
         with io.open(os.path.join(history_path, 'History.json'), 'w') as history_file:
             history_file.write(json.dumps([[]]))
