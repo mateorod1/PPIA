@@ -35,15 +35,19 @@ function App() {
     );
   }
   
-  const handleLogin = (e) =>{
+  const handleLogin = (e) => {
     e.preventDefault();
-    if (studentNumber==authConf.studentNumber && password==authConf.password){
-      setConnected(true)
-    }
-    else{
+    
+    const userExists = authConf.users.some(
+      user => user.studentNumber === studentNumber && user.password === password
+    );
+    
+    if (userExists) {
+      setConnected(true);
+    } else {
       console.log("Nombre de usuario o contraseña incorrectos, por favor inténtalo de nuevo.");
     }
-  }
+  };
 
   const fetchChatHistory = async () => {
     try {
