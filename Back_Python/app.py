@@ -29,7 +29,17 @@ info = {}
 success_fail = True
 
 k = 140
-emph = '#'+'-'*k+'#'
+
+def retrieve_temas_dif():
+    temas = []
+    difs = []
+    for preg in Preguntas:
+        if Preguntas[preg]['tema'] not in temas:
+            temas.append(Preguntas[preg]['tema'])
+        if Preguntas[preg]['dif'] not in difs:
+            difs.append(Preguntas[preg]['dif'])
+
+    return(temas, difs)
 
 # Retrieve the history and save it in local when launching the app
 def load_history():
@@ -37,10 +47,20 @@ def load_history():
     global inicializador_id
     file_path = history_path+"History.json"
 
+    (temas, difs) = retrieve_temas_dif()
+    temas_str = "\t\t- "+",\n\t\t- ".join(map(str, temas))  # For string lists
+    difs_str = "\t\t- "+", ".join(map(str, difs))  # For numeric lists, convert each item to a string
+
+    list_temas_difs = f'''Eliges un tema y una dificultad dentro de la lista para empezar el quiz:  \n                                 
+        Temas: \n{temas_str}\n
+        Dificultades: \n{difs_str}
+
+Tu respuesta deber ser formatada como lo siguiente: 
+tema dificultad (ej: logica 2)'''
+    
     inicializador_id = 1 # Cambiar o añadir una función acá para instanciar el inicializador con lo que uno quiera
     if os.path.exists(file_path):
-        if len(History[0])<3:
-            History[0].append({'id':2, 'responseChatbot': call_image(inicializador_id)}) # Cambiar el inicializador permite cambiar la primera imagen que se muestra
+        History[0].append({'id':2, 'responseChatbot': list_temas_difs})
         with io.open(os.path.join(history_path, 'History.json'), 'w', encoding='utf-8') as history_file:
             history_file.write(json.dumps(History))
     else:
@@ -49,15 +69,15 @@ def load_history():
 
 
 def ask_message():
-    ask_msg = input('\n\nEscriba su respuesta: ')
+    ask_msg = input('Escriba su respuesta: ')
     return ask_msg
 
 def fail_message():
-    fail_msg = '\n\nSe ha equivocado en la elección de la respuesta correcta. A continuación se le mostrará un ejercicio de nivel menor o igual al que realizó. ¿ Desea Continuar ?\n\n'
+    fail_msg = 'Se ha equivocado en la elección de la respuesta correcta. A continuación se le mostrará un ejercicio de nivel menor o igual al que realizó. ¿ Desea Continuar ?'
     return(fail_msg)
 
 def success_message():
-    success_msg = '\n\nHa acertado en la elección de la respuesta correcta. A continuación se le mostrará un ejercicio de nivel superior o igual al que realizó. ¿ Desea Continuar ?\n\n'
+    success_msg = 'Ha acertado en la elección de la respuesta correcta. A continuación se le mostrará un ejercicio de nivel superior o igual al que realizó. ¿ Desea Continuar ?'
     return(success_msg)
 
 def call_image(id): 
@@ -125,6 +145,48 @@ def receive_question():
                     'responseChatbot': f"{responseChatbot}"
                 }
                 
+        elif "Eliges un tema y una dificultad dentro de la lista para empezar el quiz:" in question:
+            (temas, difs) = retrieve_temas_dif()
+            selected_theme = None
+            selected_dif = None
+            for tema in temas:
+                if tema in responseStudent:
+                    selected_theme = tema
+                    break
+            for dif in difs:
+                if str(dif) in responseStudent:
+                    selected_dif = dif
+                    break
+            if selected_theme is None or selected_dif is None:
+                temas_str = "\t\t- "+",\n\t\t- ".join(map(str, temas))  # For string lists
+                difs_str = "\t\t- "+", ".join(map(str, difs))  # For numeric lists, convert each item to a string
+
+                list_temas_difs = f'''Eliges un tema y una dificultad dentro de la lista para empezar el quiz:  \n                                 
+        Temas: \n{temas_str}\n
+        Dificultades: \n{difs_str}
+
+Tu respuesta deber ser formatada como lo siguiente: 
+tema dificultad (ej: logica 2)'''
+                
+                responseChatbot = 'No entendí tu respuesta.\n'+ list_temas_difs
+            
+            else:
+                
+                ### Crear la funcion que permite elegir la pregunta segun el tema y la dificultad elegida
+                #   - cambiar la funcion update_question para que toma en cuenta un tema dado (y eso para toda la sesión)
+                #   - crear una función que eliga la primera pregunta de la sesión porque toma en cuenta la dificultad
+                #   - o hacer los dos en una unica función 
+                # Esta funcion update inicializador_id estilo:
+                #       inicializador_id = update_question(selected_theme, selected_dif)
+
+                responseChatbot = call_image(inicializador_id)
+
+            # Respuesta final
+            response = {
+                'id': q_id,
+                'responseStudent': f"{responseStudent}",
+                'responseChatbot': f"{responseChatbot}"
+            }
 
         else:
             info = call_question(inicializador_id)

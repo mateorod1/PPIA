@@ -395,7 +395,7 @@ li {
   margin-bottom: 10px;
   padding: 10px;
   border-radius: 10px;
-  
+  white-space: pre-wrap; /* Preserves both \n and \t */
   background-color: #ffffff; /* Light green background color */
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
   
