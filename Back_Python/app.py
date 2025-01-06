@@ -125,11 +125,28 @@ def call_image(id):
 def call_question(id):
     return Preguntas[id]
 
+def init_question(selected_dif):
+    global selected_theme
+    indices = []
+    
+    filtered_temas = {key: value for key, value in Preguntas.items() if value['tema'] == selected_theme}
+    filtered_difs = {key: value for key, value in filtered_temas.items() if value['dif'] == selected_dif}
+    
+    for preg in filtered_difs:
+        indices.append(preg)
+
+    indice = random.choice(indices)
+    return indice
+
 def update_question(success_fail,inicializador_id):
     global info
+    global selected_theme
+    
     indices = []
     dificultad_actual = Preguntas[inicializador_id]['dif']
-    for pregunta in Preguntas:
+    filtered_preguntas = {key: value for key, value in Preguntas.items() if value['tema'] == selected_theme}
+
+    for pregunta in filtered_preguntas:
         if pregunta != inicializador_id:
             if success_fail:
                 if info['dif']>= dificultad_actual:
@@ -209,14 +226,7 @@ tema dificultad (ej: logica 2)'''
                 responseChatbot = 'No entendí tu respuesta.\n'+ list_temas_difs
             
             else:
-                
-                ### Crear la funcion que permite elegir la pregunta segun el tema y la dificultad elegida
-                #   - cambiar la funcion update_question para que toma en cuenta un tema dado (y eso para toda la sesión)
-                #   - crear una función que eliga la primera pregunta de la sesión porque toma en cuenta la dificultad
-                #   - o hacer los dos en una unica función 
-                # Esta funcion update inicializador_id estilo:
-                #       inicializador_id = update_question(selected_theme, selected_dif)
-
+                inicializador_id = init_question(selected_dif)
                 responseChatbot = call_image(inicializador_id)
 
             # Respuesta final
