@@ -19,10 +19,10 @@ history_path = "react_build/"
 
 # Variables for the sake of the program
 record = []
-n = 0
 inicializador_id = 1
 info = {}
 success_fail = True
+selected_theme = None
 
 k = 140
 
@@ -185,7 +185,7 @@ def receive_question():
                 
         elif "Eliges un tema y una dificultad dentro de la lista para empezar el quiz:" in question:
             (temas, difs) = retrieve_temas_dif()
-            selected_theme = None
+            global selected_theme
             selected_dif = None
             for tema in temas:
                 if tema in responseStudent:
@@ -228,6 +228,7 @@ tema dificultad (ej: logica 2)'''
     
         elif "¿ Desea reiniciar un quiz ?" in question:
             if 'si' in responseStudent or 'yes' in responseStudent:
+                record = []
                 responseChatbot = 'reinit'
             elif ("no" in responseStudent):
                 responseChatbot = tail_message()
