@@ -81,9 +81,10 @@ def tail_message():
     themes = []
     difs_succeed = {}
     difs_failed = {}
+    print(record)
+    if len(record)==0:
+        return 'Ha finalizado la práctica.\nUsted realizó {} ejercicios.\n\n'.format(len(record)) + '\n¿ Desea reiniciar un quiz ?'
     for rec in record:
-        print(rec)
-        print(Preguntas[rec[0]])
         if Preguntas[rec[0]]['tema'] not in themes:
             themes.append(Preguntas[rec[0]]['tema'])
         if rec[1]:
@@ -111,9 +112,7 @@ def tail_message():
     )
     summary = summary_succeed + "\n\n" + summary_failed
 
-    rec_str = f"El resumen de la practica es el siguiente: \n{summary}."
-    print(difs_succeed, difs_failed)
-    print(rec_str)
+    rec_str = f"El resumen de la practica es el siguiente: \n{summary}"
     
     tail_message = 'Ha finalizado la práctica.\nUsted realizó {} ejercicios.\n\n'.format(len(record)) + "El tema elegido fue "+temas_str+".\n"+ rec_str + '\n¿ Desea reiniciar un quiz ?'
     return(tail_message)
@@ -175,9 +174,7 @@ def receive_question():
                 inicializador_id = update_question(success_fail,inicializador_id) # Se actualiza a una nueva pregunta para que el estudiante resuelva.
                 responseChatbot = call_image(inicializador_id)
             elif ("no" in responseStudent):
-
                 responseChatbot = tail_message()
-                print(record)
             else:
                 responseChatbot = "No entendí tu respuesta. ¿ Desea Continuar ?"
             response = {
@@ -233,7 +230,7 @@ tema dificultad (ej: logica 2)'''
             if 'si' in responseStudent or 'yes' in responseStudent:
                 responseChatbot = 'reinit'
             elif ("no" in responseStudent):
-                responseChatbot = tail_message(1)
+                responseChatbot = tail_message()
             else:
                 responseChatbot = "No entendí tu respuesta. ¿ Desea reiniciar un quiz ?"
             response = {
