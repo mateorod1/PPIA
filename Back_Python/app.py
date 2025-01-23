@@ -200,8 +200,8 @@ def receive_question():
                     'responseChatbot': f"{responseChatbot}"
                 }
                 
-        elif "Eliges un tema y una dificultad dentro de la lista para empezar el quiz:" in question:
-            (temas, difs) = retrieve_temas_dif()
+        elif "Elige un tema y una dificultad dentro de la lista para empezar el quiz:" in question:
+            (temas, difs) = retrieve_temas_dif() #esto recupera todos los temas y dificultades en mis preguntas
             global selected_theme
             selected_dif = None
             for tema in temas:
@@ -216,7 +216,7 @@ def receive_question():
                 temas_str = "\t\t- "+",\n\t\t- ".join(map(str, temas))  # For string lists
                 difs_str = "\t\t- "+", ".join(map(str, difs))  # For numeric lists, convert each item to a string
 
-                list_temas_difs = f'''Eliges un tema y una dificultad dentro de la lista para empezar el quiz:  \n                                 
+                list_temas_difs = f'''Elige un tema y una dificultad dentro de la lista para empezar el quiz:  \n                                 
         Temas: \n{temas_str}\n
         Dificultades: \n{difs_str}
 
