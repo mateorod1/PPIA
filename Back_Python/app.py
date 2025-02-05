@@ -47,7 +47,7 @@ def load_history():
     temas_str = "\t\t- "+",\n\t\t- ".join(map(str, temas))  # For string lists
     difs_str = "\t\t- "+", ".join(map(str, difs))  # For numeric lists, convert each item to a string
 
-    list_temas_difs = f'''Eliges un tema y una dificultad dentro de la lista para empezar el quiz:  \n                                 
+    list_temas_difs = f'''Elige un tema y una dificultad dentro de la lista para empezar el quiz:  \n                                 
         Temas: \n{temas_str}\n
         Dificultades: \n{difs_str}
 
